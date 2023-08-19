@@ -16,3 +16,32 @@ cd foodgram-project-react/
 ```
 docker-compose up --build
 ```
+#### Виртуальное окружение.
+Cоздать и активировать виртуальное окружение:
+
+```
+python -m venv venv
+```
+
+```
+source venv/scripts/activate
+```
+
+Установить зависимости из файла requirements.txt:
+
+```
+python -m pip install --upgrade pip
+```
+
+```
+pip install -r requirements.txt
+```
+
+Выполнить миграции:
+
+```
+python manage.py migrate
+```
+****
+### *Над проектом работал Лисин Семён :heart:*
+### *Код написан на языке Python :v:*
