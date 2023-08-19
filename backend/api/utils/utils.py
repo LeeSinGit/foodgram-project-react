@@ -1,3 +1,4 @@
+from api.config.config import ALREADY_SIGNED
 from api.serializers import UserSerializer
 from rest_framework import exceptions, status
 from rest_framework.generics import get_object_or_404
@@ -81,6 +82,6 @@ def perform_subscribe_action(author, context):
         return Response(user_serializer.data, status=status.HTTP_201_CREATED)
     else:
         return Response(
-            {'detail': 'Вы уже подписаны на этого автора.'},
+            {'detail': ALREADY_SIGNED},
             status=status.HTTP_400_BAD_REQUEST
         )

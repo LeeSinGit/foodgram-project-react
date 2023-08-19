@@ -1,3 +1,7 @@
+from backend.api.config.config import (
+    AT_LEAST_ONE_TAG,
+    IDENTICAL_ONES_ARE_NOT_ALLOWED,
+)
 from baseapp.models import Favorite, ShoppingCart
 from rest_framework import serializers
 
@@ -52,7 +56,7 @@ def validate_tags(tags):
     """
 
     if not tags:
-        raise serializers.ValidationError('Нужно добавить хотя бы один тег.')
+        raise serializers.ValidationError(AT_LEAST_ONE_TAG)
     return tags
 
 
@@ -70,7 +74,5 @@ def validate_unique_ingredients(ingredients):
     ingredient_ids = [item['id'] for item in ingredients]
     for ingredient in ingredient_ids:
         if ingredient_ids.count(ingredient) > 1:
-            raise serializers.ValidationError(
-                'Два идентичных ингредиента недопустимы.'
-            )
+            raise serializers.ValidationError(IDENTICAL_ONES_ARE_NOT_ALLOWED)
     return ingredients
