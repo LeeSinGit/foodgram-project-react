@@ -8,9 +8,9 @@
 ```
 git clone git@github.com:LeeSinGit/foodgram-project-react.git
 ```
-#### ШАГ 1 - Зайти в корневую директорию проекта;
+#### ШАГ 1 - Зайти в папку infra проекта;
 ```
-cd foodgram-project-react/
+cd foodgram-project-react/infra/
 ```
 #### ШАГ 2 - Применить команду;
 ```
