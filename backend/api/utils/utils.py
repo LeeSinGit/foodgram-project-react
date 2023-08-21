@@ -1,13 +1,19 @@
+from typing import Type
+
 from rest_framework import exceptions, status
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
+from rest_framework.serializers import Serializer
+
+from django.db.models import Model
 
 from api.config.config import ALREADY_SIGNED
 from api.serializers import UserSerializer
+from baseapp.models import Recipe
 from users.models import Subscription, User
 
 
-def get_author(id) -> int:
+def get_author(id: int) -> User:
     """
     Получить автора по его идентификатору.
 
@@ -21,13 +27,13 @@ def get_author(id) -> int:
 
 
 def perform_favorite_or_cart_action(
-    user,
-    recipe,
-    model,
-    serializer_class,
-    error_message,
+    user: User,
+    recipe: Recipe,
+    model: type[Model],
+    serializer_class: type[Serializer],
+    error_message: str,
     request
-):
+) -> Response:
     """
     Выполнить действие "Избранное" или "Список покупок" для рецепта.
 
@@ -66,7 +72,7 @@ def perform_favorite_or_cart_action(
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-def perform_subscribe_action(author, context):
+def perform_subscribe_action(author: User, context) -> Response:
     """
     Выполнить действие "Подписаться" на автора.
 

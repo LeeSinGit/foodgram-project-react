@@ -18,7 +18,11 @@ from api.config.config import (
     SUCCESSFUL_UNSUBSCRIPTION,
 )
 from api.filter import RecipeFilter
-from api.mixins import TagAndIngridientMixin, ViewMixin
+from api.mixins import (
+    MultiSerializerViewSetMixin,
+    TagAndIngridientMixin,
+    ViewMixin,
+)
 from api.pagination import CustomPagination
 from api.permissions import IsAuthorOrAdminOrReadOnly
 from api.serializers import (
@@ -30,7 +34,6 @@ from api.serializers import (
     TagSerializer,
     UserSerializer,
 )
-from api.utils.custom_views import MultiSerializerViewSetMixin
 from api.utils.utils import (
     get_author,
     perform_favorite_or_cart_action,

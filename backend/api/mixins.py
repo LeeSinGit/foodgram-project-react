@@ -1,5 +1,5 @@
 from rest_framework.response import Response
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, Serializer
 from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_204_NO_CONTENT,
@@ -52,3 +52,18 @@ class TagAndIngridientMixin:
     """Миксина для списка тегов и ингридиентов."""
 
     permission_classes = (IsAdminOrReadOnly,)
+
+
+class MultiSerializerViewSetMixin:
+    """
+    Mixin for selecting an appropriate
+    serializer from `serializer_classes`.
+    """
+
+    serializer_classes: dict[str, Serializer] | None = None
+
+    def get_serializer_class(self):
+        try:
+            return self.serializer_classes[self.action]
+        except KeyError:
+            return super().get_serializer_class()
