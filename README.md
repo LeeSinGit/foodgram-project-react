@@ -16,6 +16,15 @@ cd foodgram-project-react/infra/
 ```
 docker-compose up --build
 ```
+
+#### Импорт из CSV в базу данных был выполнен с помощью:
+```
+docker cp data/ingredients.csv foodgram-db:/ingredients.csv
+```
+```
+COPY baseapp_ingredient (name, measurement_unit) FROM '/ingredients.csv' DELIMITER ',' CSV HEADER;
+```
+
 #### Виртуальное окружение.
 Cоздать и активировать виртуальное окружение:
 
