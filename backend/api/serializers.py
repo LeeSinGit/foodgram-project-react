@@ -1,3 +1,11 @@
+from drf_extra_fields.fields import Base64ImageField
+from rest_framework import serializers
+from rest_framework.serializers import ModelSerializer, SerializerMethodField
+
+from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
+from django.shortcuts import get_object_or_404
+
 from api.config.config import COOKING_TIME, ONE_OR_MORE_INGREDIENTS
 from api.utils.serializers_utils import (
     is_recipe_favorited,
@@ -6,12 +14,6 @@ from api.utils.serializers_utils import (
     validate_unique_ingredients,
 )
 from baseapp.models import Ingredient, Recipe, RecipeIngredients, Tag
-from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
-from django.shortcuts import get_object_or_404
-from drf_extra_fields.fields import Base64ImageField
-from rest_framework import serializers
-from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 
 User = get_user_model()
@@ -30,7 +32,7 @@ class UserSerializer(ModelSerializer):
 
     is_subscribed = SerializerMethodField()
     recipes = MiniRecipeSerializer(many=True, read_only=True)
-    recipes_count = SerializerMethodField()
+    recipes_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = User
@@ -46,11 +48,10 @@ class UserSerializer(ModelSerializer):
             'recipes_count',
         )
         extra_kwargs = {'password': {'write_only': True}}
-        read_only_fields = ('is_subscribed', 'recipes', 'recipes_count')
+        read_only_fields = ('is_subscribed', 'recipes')
 
     def get_is_subscribed(self, obj: User) -> bool:
         """Проверяет, подписан ли пользователь."""
-
         user = self.context.get('request').user
 
         if user.is_anonymous:
@@ -59,20 +60,22 @@ class UserSerializer(ModelSerializer):
         return obj.subscribers.filter(user=user).exists()
 
     def get_recipes_count(self, obj: User) -> int:
-        """Получает количество рецептов пользователя."""
-
-        return obj.recipes.count()
+        """Получает количество рецептов определенного пользователя."""
+        return obj.recipes_count
 
     def to_representation(self, instance: User) -> dict:
-        """Преобразует модель пользователя в представление."""
+        """
+        Преобразует модель пользователя в представление.
+        """
+        representation = super().to_representation(instance)
 
-        ret = super().to_representation(instance)
         recipes = MiniRecipeSerializer(
             instance.recipes.all(), many=True, context=self.context
         )
-        ret['recipes'] = recipes.data
-        ret['recipes_count'] = instance.recipes.count()
-        return ret
+
+        representation['recipes'] = recipes.data
+
+        return representation
 
     def create(self, validated_data: dict) -> User:
         """
@@ -84,15 +87,13 @@ class UserSerializer(ModelSerializer):
         Returns:
             User: Созданный пользователь.
         """
-
-        user = User(
+        user = User.objects.create_user(
             email=validated_data['email'],
             username=validated_data['username'],
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name'],
+            password=validated_data['password']
         )
-        user.set_password(validated_data['password'])
-        user.save()
         return user
 
 
@@ -100,7 +101,7 @@ class SubscriptionSerializer(UserSerializer):
     """Сериализатор для списка подписок пользователя."""
 
     recipes = MiniRecipeSerializer(many=True, read_only=True)
-    recipes_count = SerializerMethodField()
+    recipes_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = User
@@ -114,12 +115,10 @@ class SubscriptionSerializer(UserSerializer):
             'email',
             'id'
         )
-        read_only_fields = ('__all__',)
 
     def get_recipes_count(self, obj: User) -> int:
         """Получает количество рецептов определенного пользователя."""
-
-        return obj.recipes.count()
+        return obj.recipes_count
 
 
 class TagSerializer(ModelSerializer):
@@ -141,25 +140,18 @@ class IngredientSerializer(ModelSerializer):
 class RecipeIngredientsSerializer(serializers.ModelSerializer):
     """Сериализатор для модели RecipeIngredients"""
 
-    id = serializers.SerializerMethodField(method_name='get_id')
+    id = serializers.IntegerField(source='ingredient_id')
     name = serializers.SerializerMethodField(method_name='get_name')
     measurement_unit = serializers.SerializerMethodField(
         method_name='get_measurement_unit'
     )
 
-    def get_id(self, obj) -> int:
-        """Получает ID ингредиента."""
-
-        return obj.ingredient.id
-
     def get_name(self, obj) -> str:
         """Получает название ингредиента."""
-
         return obj.ingredient.name
 
     def get_measurement_unit(self, obj) -> str:
         """Получает единицу измерения ингредиента."""
-
         return obj.ingredient.measurement_unit
 
     class Meta:
@@ -205,20 +197,17 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def get_ingredients(self, obj) -> list:
         """Получает список ингредиентов для рецепта."""
-
         ingredients = RecipeIngredients.objects.filter(recipe=obj)
         serializer = RecipeIngredientsSerializer(ingredients, many=True)
         return serializer.data
 
     def get_is_favorited(self, obj) -> bool:
         """Проверяет, добавлен ли рецепт в избранное пользователем."""
-
         user = self.context['request'].user
         return is_recipe_favorited(user, obj)
 
     def get_is_in_shopping_cart(self, obj) -> bool:
         """Проверяет, добавлен ли рецепт в список покупок пользователя."""
-
         user = self.context['request'].user
         return is_recipe_in_shopping_cart(user, obj)
 
@@ -251,12 +240,10 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
 
     def validate_tags(self, value) -> list:
         """Проверяет, что список тегов не пуст."""
-
         return validate_tags(value)
 
     def validate_ingredients(self, value) -> list:
         """Проверяет, что ингредиенты уникальны."""
-
         return validate_unique_ingredients(value)
 
     def create(self, validated_data: dict) -> Recipe:

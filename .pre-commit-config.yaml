@@ -12,13 +12,6 @@ repos:
     -   id: double-quote-string-fixer  # заменяет " на '
     -   id: end-of-file-fixer  # добавляет пустую строку в конце файла
 
-# Отсортировывает импорты в проекте
--   repo: https://github.com/pycqa/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
-        exclude: __init__.py
-        args: [ --profile, black, --filter-files ]
 
 # Обновляет синтаксис Python кода в соответствии с последними версиями
 -   repo: https://github.com/asottile/pyupgrade
@@ -33,11 +26,3 @@ repos:
     hooks:
     -   id: autopep8
         args: [--max-line-length=120, --in-place]
-
-# Сканер стилистических ошибок, нарушающие договоренности PEP8
--   repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
-    hooks:
-    -   id: flake8
-        exclude: 'migrations'
-        args: ["--ignore=E501,F821,W503", "--max-line-length=120"]

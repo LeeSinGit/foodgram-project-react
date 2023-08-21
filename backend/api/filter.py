@@ -1,24 +1,31 @@
 from distutils.util import strtobool
 
-from baseapp.models import Favorite, Recipe, ShoppingCart, Tag
 from django_filters import rest_framework
 
+from django.db import models
 
-CHOICES_LIST = (
-    ('0', 'False'),
-    ('1', 'True')
-)
+from baseapp.models import Favorite, Recipe, ShoppingCart, Tag
 
 
 class RecipeFilter(rest_framework.FilterSet):
+    class IsFavoritedChoices(models.TextChoices):
+        FALSE = '0', 'False'
+        TRUE = '1', 'True'
+
     is_favorited = rest_framework.ChoiceFilter(
-        choices=CHOICES_LIST,
+        choices=IsFavoritedChoices.choices,
         method='is_favorited_method'
     )
+
+    class IsInShoppingCartChoices(models.TextChoices):
+        FALSE = '0', 'False'
+        TRUE = '1', 'True'
+
     is_in_shopping_cart = rest_framework.ChoiceFilter(
-        choices=CHOICES_LIST,
+        choices=IsInShoppingCartChoices.choices,
         method='is_in_shopping_cart_method'
     )
+
     author = rest_framework.NumberFilter(
         field_name='author',
         lookup_expr='exact'
@@ -34,26 +41,24 @@ class RecipeFilter(rest_framework.FilterSet):
             return Recipe.objects.none()
 
         favorites = Favorite.objects.filter(user=self.request.user)
-        recipes = [item.recipe.id for item in favorites]
-        new_queryset = queryset.filter(id__in=recipes)
+        recipe_ids = favorites.values_list('recipe__id', flat=True)
 
         if not strtobool(value):
-            return queryset.difference(new_queryset)
+            return queryset.exclude(id__in=recipe_ids)
 
-        return queryset.filter(id__in=recipes)
+        return queryset.filter(id__in=recipe_ids)
 
     def is_in_shopping_cart_method(self, queryset, name, value):
         if self.request.user.is_anonymous:
             return Recipe.objects.none()
 
         shopping_cart = ShoppingCart.objects.filter(user=self.request.user)
-        recipes = [item.recipe.id for item in shopping_cart]
-        new_queryset = queryset.filter(id__in=recipes)
+        recipe_ids = shopping_cart.values_list('recipe__id', flat=True)
 
         if not strtobool(value):
-            return queryset.difference(new_queryset)
+            return queryset.exclude(id__in=recipe_ids)
 
-        return queryset.filter(id__in=recipes)
+        return queryset.filter(id__in=recipe_ids)
 
     class Meta:
         model = Recipe

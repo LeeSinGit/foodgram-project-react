@@ -1,12 +1,13 @@
-from api.config.config import ALREADY_SIGNED
-from api.serializers import UserSerializer
 from rest_framework import exceptions, status
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
+
+from api.config.config import ALREADY_SIGNED
+from api.serializers import UserSerializer
 from users.models import Subscription, User
 
 
-def get_author(id):
+def get_author(id) -> int:
     """
     Получить автора по его идентификатору.
 
@@ -42,7 +43,8 @@ def perform_favorite_or_cart_action(
         Response: Ответ на действие.
     """
     if request.method == 'POST':
-        if model.objects.filter(user=user, recipe=recipe).exists():
+        existing_objects = model.objects.filter(user=user, recipe=recipe)
+        if existing_objects.exists():
             raise exceptions.ValidationError(error_message)
 
         model.objects.create(user=user, recipe=recipe)
@@ -51,11 +53,13 @@ def perform_favorite_or_cart_action(
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     if request.method == 'DELETE':
-        if not model.objects.filter(user=user, recipe=recipe).exists():
-            raise exceptions.ValidationError(error_message)
+        deleted_count, _ = model.objects.filter(
+            user=user,
+            recipe=recipe
+        ).delete()
 
-        obj = get_object_or_404(model, user=user, recipe=recipe)
-        obj.delete()
+        if deleted_count == 0:
+            raise exceptions.ValidationError(error_message)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -80,8 +84,8 @@ def perform_subscribe_action(author, context):
     if created:
         user_serializer = UserSerializer(author, context=context)
         return Response(user_serializer.data, status=status.HTTP_201_CREATED)
-    else:
-        return Response(
-            {'detail': ALREADY_SIGNED},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+
+    return Response(
+        {'detail': ALREADY_SIGNED},
+        status=status.HTTP_400_BAD_REQUEST
+    )

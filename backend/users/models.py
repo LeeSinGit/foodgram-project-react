@@ -1,7 +1,9 @@
-from api.validators import validate_username
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import CASCADE, DateTimeField, F, ForeignKey, Model, Q
+
+from api.validators import validate_username
+from users.managers import CustomUserManager
 
 
 class User(AbstractUser):
@@ -47,6 +49,7 @@ class User(AbstractUser):
         help_text='Конкретные разрешения для этого пользователя.',
         related_query_name='user'
     )
+    objects = CustomUserManager()
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -82,13 +85,13 @@ class Subscription(Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['author', 'user'],
-                name='Повторяющаяся подписка'
+                name='uq_user_author'
             ),
             models.CheckConstraint(
                 check=~Q(author=F('user')),
-                name='Запрет самоподписки'
+                name='pr_of_sub_user-user'
             ),
         ]
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         return f'{self.user} - {self.author}'

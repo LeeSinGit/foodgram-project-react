@@ -1,3 +1,16 @@
+from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet as DjoserUserViewSet
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
+
+from django.contrib.auth import get_user_model
+from django.db.models import Count, Prefetch, Sum
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+
 from api.config.config import (
     ALREADY_IN_FAVORITES,
     ALREADY_ON_THE_SHOPPING_LIST,
@@ -17,6 +30,7 @@ from api.serializers import (
     TagSerializer,
     UserSerializer,
 )
+from api.utils.custom_views import MultiSerializerViewSetMixin
 from api.utils.utils import (
     get_author,
     perform_favorite_or_cart_action,
@@ -30,18 +44,6 @@ from baseapp.models import (
     ShoppingCart,
     Tag,
 )
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Sum
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
-from djoser.views import UserViewSet as DjoserUserViewSet
-from rest_framework import status
-from rest_framework.decorators import action
-from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
 from users.models import Subscription
 
 
@@ -51,12 +53,17 @@ User = get_user_model()
 class UserViewSet(DjoserUserViewSet, ViewMixin):
     """Представление для операций с пользователями."""
 
-    queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (DjangoModelPermissions,)
     add_serializer = SubscriptionSerializer
     link_model = Subscription
     pagination_class = CustomPagination
+
+    def get_queryset(self):
+        # Аннотация для подсчета количества рецептов
+        queryset = super().get_queryset()
+        queryset = queryset.annotate(recipes_count=Count('recipes'))
+        return queryset
 
     @action(
         methods=['post'],
@@ -68,10 +75,7 @@ class UserViewSet(DjoserUserViewSet, ViewMixin):
 
         context = self.get_serializer_context()
 
-        try:
-            author = get_author(id)
-        except User.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        author = get_author(id)
 
         if author == context['request'].user:
             return Response(
@@ -90,19 +94,22 @@ class UserViewSet(DjoserUserViewSet, ViewMixin):
         """Отписаться от пользователя."""
 
         context = self.get_serializer_context()
+        author = get_author(id)
 
-        try:
-            author = get_author(id)
-            subscription = self.link_model.objects.get(
-                author=author, user=context['request'].user
-            )
-            subscription.delete()
+        deleted_count, _ = self.link_model.objects.filter(
+            author=author, user=context['request'].user
+        ).delete()
+
+        if deleted_count > 0:
             return Response(
                 {'detail': SUCCESSFUL_UNSUBSCRIPTION},
                 status=status.HTTP_204_NO_CONTENT
             )
-        except ObjectDoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response(
+                {'error': f'{self.link_model.__name__} не существует'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
     @action(
         methods=['get'],
@@ -137,29 +144,40 @@ class IngredientsViewSet(ModelViewSet, TagAndIngridientMixin):
     lookup_field = 'id'
 
 
-class RecipeViewSet(ModelViewSet):
-    """Представление для операций с рецептами."""
+class RecipeViewSet(MultiSerializerViewSetMixin, ModelViewSet):
+    """
+    Представление для операций с рецептами.
+    """
 
-    queryset = Recipe.objects.all()
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     pagination_class = CustomPagination
 
-    def get_serializer_class(self):
-        """
-        Возвращает соответствующий класс
-        сериализатора в зависимости от действия.
-        """
+    serializer_classes = {
+        'list': RecipeSerializer,
+        'retrieve': RecipeSerializer,
+        'create': RecipeCreateUpdateSerializer,
+        'partial_update': RecipeCreateUpdateSerializer,
+    }
 
-        if self.action in ('create', 'partial_update'):
-            return RecipeCreateUpdateSerializer
-        return RecipeSerializer
+    def get_queryset(self):
+        queryset = Recipe.objects.all()
+        queryset = queryset.select_related('author')
+        queryset = queryset.prefetch_related(
+            Prefetch('tags', queryset=Tag.objects.all()),
+            Prefetch(
+                'recipeingredients_set',
+                queryset=RecipeIngredients.objects.select_related(
+                    'ingredient'
+                ),
+            ),
+        )
+        return queryset
 
     @action(detail=True, methods=('post', 'delete'))
     def favorite(self, request, pk=None):
         """Добавить или удалить рецепт из избранного."""
-
         user = self.request.user
         recipe = get_object_or_404(Recipe, pk=pk)
         error_message = ALREADY_IN_FAVORITES
@@ -169,13 +187,12 @@ class RecipeViewSet(ModelViewSet):
             Favorite,
             MiniRecipeSerializer,
             error_message,
-            request
+            request,
         )
 
     @action(detail=True, methods=('post', 'delete'))
     def shopping_cart(self, request, pk=None):
         """Добавить или удалить рецепт из списка покупок."""
-
         user = self.request.user
         recipe = get_object_or_404(Recipe, pk=pk)
         error_message = ALREADY_ON_THE_SHOPPING_LIST
@@ -185,38 +202,46 @@ class RecipeViewSet(ModelViewSet):
             ShoppingCart,
             MiniRecipeSerializer,
             error_message,
-            request
+            request,
         )
 
     @action(
         detail=False,
         methods=('get',),
-        permission_classes=(IsAuthenticated,)
+        permission_classes=(IsAuthenticated,),
     )
     def download_shopping_cart(self, request):
         """Скачать список покупок."""
-
         shopping_cart = ShoppingCart.objects.filter(user=self.request.user)
         recipes = [item.recipe.id for item in shopping_cart]
-        buy_list = RecipeIngredients.objects.filter(
-            recipe__in=recipes
-        ).values(
-            'ingredient'
-        ).annotate(
-            amount=Sum('amount')
-        )
 
-        buy_list_text = 'Список покупок:\n\n'
-        for item in buy_list:
-            ingredient = Ingredient.objects.get(pk=item['ingredient'])
-            amount = item['amount']
-            buy_list_text += (
-                f'{ingredient.name}, {amount} '
-                f'{ingredient.measurement_unit}\n'
-            )
+        # Отформатированный список ингредиентов и их количество
+        buy_list_text = self.get_shopping_list_text(recipes)
 
         response = HttpResponse(buy_list_text, content_type='text/plain')
         response['Content-Disposition'] = (
             'attachment; filename=shopping-list.txt'
         )
         return response
+
+    def get_shopping_list_text(self, recipes):
+        """Создает текстовый список покупок на основе рецептов."""
+        ingredients_aggregated = (
+            RecipeIngredients.objects.filter(recipe__in=recipes)
+            .values('ingredient')
+            .annotate(amount=Sum('amount'))
+        )
+
+        buy_list_text = 'Список покупок:\n\n'
+        for item in ingredients_aggregated:
+            try:
+                ingredient = Ingredient.objects.get(pk=item['ingredient'])
+                amount = item['amount']
+                buy_list_text += (
+                    f'{ingredient.name}, {amount} '
+                    f'{ingredient.measurement_unit}\n'
+                )
+            except Ingredient.DoesNotExist:
+                pass
+
+        return buy_list_text

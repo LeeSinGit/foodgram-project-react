@@ -1,9 +1,7 @@
-from backend.api.config.config import (
-    AT_LEAST_ONE_TAG,
-    IDENTICAL_ONES_ARE_NOT_ALLOWED,
-)
-from baseapp.models import Favorite, ShoppingCart
 from rest_framework import serializers
+
+from api.config.config import AT_LEAST_ONE_TAG, IDENTICAL_ONES_ARE_NOT_ALLOWED
+from baseapp.models import Favorite, ShoppingCart
 
 
 def is_recipe_favorited(user, recipe):
@@ -18,7 +16,6 @@ def is_recipe_favorited(user, recipe):
         bool: True, если рецепт добавлен в избранное пользователем,
         иначе False.
     """
-
     if user.is_anonymous:
         return False
 
@@ -37,7 +34,6 @@ def is_recipe_in_shopping_cart(user, recipe):
         bool: True, если рецепт добавлен в список покупок пользователя,
         иначе False.
     """
-
     if user.is_anonymous:
         return False
 
@@ -54,7 +50,6 @@ def validate_tags(tags):
     Raises:
         serializers.ValidationError: Если список тегов пуст.
     """
-
     if not tags:
         raise serializers.ValidationError(AT_LEAST_ONE_TAG)
     return tags
@@ -70,7 +65,6 @@ def validate_unique_ingredients(ingredients):
     Raises:
         serializers.ValidationError: Если есть дубликаты ингредиентов.
     """
-
     ingredient_ids = [item['id'] for item in ingredients]
     for ingredient in ingredient_ids:
         if ingredient_ids.count(ingredient) > 1:

@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from decouple import Csv, config
+# from decouple import Csv, config
 from dotenv import load_dotenv
 
 
@@ -19,12 +19,12 @@ DEBUG = os.getenv('DEBUG_VALUE', 'False') == 'True'
 ip_addresses_str = os.getenv('IP_ADDRESSES')
 IP_ADDRESSES = ip_addresses_str.split(',') if ip_addresses_str is not None else []
 
-CSRF_COOKIE_SECURE = False
-CSRF_TRUSTED_ORIGINS = config(
-    'CSRF_TRUSTED_ORIGINS',
-    default='http://localhost, http://127.0.0.1',
-    cast=Csv(),
-)
+# CSRF_COOKIE_SECURE = False
+# CSRF_TRUSTED_ORIGINS = config(
+#     'CSRF_TRUSTED_ORIGINS',
+#     default='http://localhost, http://127.0.0.1',
+#     cast=Csv(),
+# )
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -140,3 +140,7 @@ DJOSER = {
         'user_create': 'api.serializers.UserSerializer',
     },
 }
+
+
+PAGE_SIZE = 6
+MAX_PAGE_SIZE = 20

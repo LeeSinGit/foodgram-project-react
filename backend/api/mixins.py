@@ -1,8 +1,3 @@
-from api.config.config import COMPLETED_EARLIER
-from api.permissions import IsAdminOrReadOnly
-from django.db.models import Model, Q
-from django.db.utils import IntegrityError
-from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 from rest_framework.status import (
@@ -10,6 +5,13 @@ from rest_framework.status import (
     HTTP_204_NO_CONTENT,
     HTTP_400_BAD_REQUEST,
 )
+
+from django.db.models import Model, Q
+from django.db.utils import IntegrityError
+from django.shortcuts import get_object_or_404
+
+from api.config.config import COMPLETED_EARLIER
+from api.permissions import IsAdminOrReadOnly
 
 
 class ViewMixin:
@@ -20,7 +22,6 @@ class ViewMixin:
 
     def _create_relation(self, obj_id) -> Response:
         """Добавляет связь многие ко многим между объектами."""
-
         obj = get_object_or_404(self.queryset, pk=obj_id)
         try:
             self.link_model(None, obj.pk, self.request.user.pk).save()
@@ -34,13 +35,12 @@ class ViewMixin:
 
     def _delete_relation(self, q: Q) -> Response:
         """Удаляет связь многие ко многим между объектами."""
-
-        deleted, _ = (
-            self.link_model.objects.filter(q & Q(user=self.request.user))
-            .first()
-            .delete()
+        deleted_count, _ = (
+            self.link_model.objects.filter(
+                q & Q(user=self.request.user)
+            ).delete()
         )
-        if not deleted:
+        if deleted_count == 0:
             return Response(
                 {'error': f'{self.link_model.__name__} не существует'},
                 status=HTTP_400_BAD_REQUEST,
