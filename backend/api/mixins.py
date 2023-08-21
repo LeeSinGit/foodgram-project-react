@@ -1,5 +1,5 @@
 from rest_framework.response import Response
-from rest_framework.serializers import ModelSerializer, Serializer
+from rest_framework.serializers import ModelSerializer
 from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_204_NO_CONTENT,
@@ -60,7 +60,8 @@ class MultiSerializerViewSetMixin:
     serializer from `serializer_classes`.
     """
 
-    serializer_classes: dict[str, Serializer] | None = None
+    # serializer_classes: Optional[dict[str, Type[Serializer]]] = None
+    serializer_classes: str
 
     def get_serializer_class(self):
         try:
