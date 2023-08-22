@@ -15,8 +15,6 @@ class CustomUserManager(BaseUserManager):
             username,
             first_name,
             last_name,
-            groups,
-            auth_token,
             password=None,
             **extra_fields
     ):
@@ -44,8 +42,6 @@ class CustomUserManager(BaseUserManager):
             username=username,
             first_name=first_name,
             last_name=last_name,
-            groups=groups,
-            auth_token=auth_token,
             **extra_fields
         )
         user.set_password(password)
