@@ -111,6 +111,7 @@ jobs:
 
         script: |
           cd foodgram
+          cd infra
 
           sudo docker compose -f docker-compose.production.yml pull
 
