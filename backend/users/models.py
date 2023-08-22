@@ -89,7 +89,7 @@ class Subscription(Model):
             ),
             models.CheckConstraint(
                 check=~Q(author=F('user')),
-                name='pr_of_sub_user-user'
+                name='pr_of_sub_user_user'
             ),
         ]
 

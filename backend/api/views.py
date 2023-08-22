@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Prefetch, Sum
+from django.db.models import Count, F, Prefetch, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 
@@ -108,11 +108,10 @@ class UserViewSet(DjoserUserViewSet, ViewMixin):
                 {'detail': SUCCESSFUL_UNSUBSCRIPTION},
                 status=status.HTTP_204_NO_CONTENT
             )
-        else:
-            return Response(
-                {'error': f'{self.link_model.__name__} не существует'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        return Response(
+            {'error': f'{self.link_model.__name__} не существует'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     @action(
         methods=['get'],
@@ -229,22 +228,28 @@ class RecipeViewSet(MultiSerializerViewSetMixin, ModelViewSet):
 
     def get_shopping_list_text(self, recipes):
         """Создает текстовый список покупок на основе рецептов."""
+
         ingredients_aggregated = (
-            RecipeIngredients.objects.filter(recipe__in=recipes)
+            RecipeIngredients.objects.filter(
+                recipe__in=recipes,
+                recipe__in_shopping_cart__user=self.request.user
+            )
             .values('ingredient')
-            .annotate(amount=Sum('amount'))
+            .annotate(
+                total_amount=Sum('amount'),
+                ingredient_name=F('ingredient__name'),
+                measurement_unit=F('ingredient__measurement_unit')
+            )
         )
 
         buy_list_text = 'Список покупок:\n\n'
+
         for item in ingredients_aggregated:
-            try:
-                ingredient = Ingredient.objects.get(pk=item['ingredient'])
-                amount = item['amount']
-                buy_list_text += (
-                    f'{ingredient.name}, {amount} '
-                    f'{ingredient.measurement_unit}\n'
-                )
-            except Ingredient.DoesNotExist:
-                pass
+            ingredient_name = item['ingredient_name']
+            measurement_unit = item['measurement_unit']
+            total_amount = item['total_amount']
+            buy_list_text += (
+                f'{ingredient_name}, {total_amount} {measurement_unit}\n'
+            )
 
         return buy_list_text
