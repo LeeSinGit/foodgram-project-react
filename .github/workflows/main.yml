@@ -133,8 +133,7 @@ jobs:
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
 
         script: |
-          cd foodgram-project-react/
-          cd infra/
+          cd infra
 
           sudo docker compose -f docker-compose.production.yml pull
 
