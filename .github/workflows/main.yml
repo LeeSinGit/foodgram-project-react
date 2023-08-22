@@ -65,22 +65,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up nodeJS
-      uses: actions/setup-node@v3
-      with:
-        node-version: 18
+      - uses: actions/checkout@v2
+      - name: Set up nodeJS
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18
 
-    - name: Install dependencies
-      run: |
-        cd frontend/
-        npm install --force
-        npm ci --force
+      - name: Get React version from package.json
+        run: |
+          cd frontend/
+          export REACT_VERSION=$(node -pe "require('./package.json').dependencies.react")
 
-    - name: Test frontend
-      run: |
-        cd frontend/
-        npm run test
+      - name: Install dependencies
+        run: |
+          cd frontend/
+          npm install --force
+          npm ci --force
+
+      - name: Test frontend
+        run: |
+          cd frontend/
+          npm run test
+
 
   build_frontend_and_push_to_docker_hub:
     name: Push frontend Docker image to DockerHub
