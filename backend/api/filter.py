@@ -1,11 +1,9 @@
 from distutils.util import strtobool
 from typing import Any
 
-from django_filters import rest_framework as filters
-
-from django.db import models
-
 from baseapp.models import Favorite, Recipe, ShoppingCart, Tag
+from django.db import models
+from django_filters import rest_framework as filters
 
 
 class RecipeFilter(filters.FilterSet):
@@ -31,24 +29,18 @@ class RecipeFilter(filters.FilterSet):
         field_name='author',
         lookup_expr='exact'
     )
+
     tags = filters.ModelMultipleChoiceFilter(
         field_name='tags__slug',
         to_field_name='slug',
         queryset=Tag.objects.all()
     )
 
+    class Meta:
+        model = Recipe
+        fields = ('author', 'tags')
+
     def is_favorited_method(self, queryset: Any, name: str, value: str) -> Any:
-        """
-        Фильтр по избранности рецепта.
-
-        Args:
-            queryset (QuerySet): Исходный набор данных.
-            name (str): Имя поля фильтра.
-            value (str): Значение фильтра.
-
-        Returns:
-            QuerySet: Отфильтрованный набор данных.
-        """
         if self.request.user.is_anonymous:
             return Recipe.objects.none()
 
@@ -61,26 +53,11 @@ class RecipeFilter(filters.FilterSet):
         return queryset.filter(id__in=recipe_ids)
 
     def is_in_shopping_cart_method(
-            self,
-            queryset: Any,
-            name: str,
-            value: str
+        self,
+        queryset: Any,
+        name: str,
+        value: str
     ) -> Any:
-        """
-        Фильтр по наличию в списке покупок.
-
-        Args:
-            queryset (QuerySet): Исходный набор данных.
-            name (str): Имя поля фильтра.
-            value (str): Значение фильтра.
-
-        Returns:
-            QuerySet: Отфильтрованный набор данных.
-        """
-        class Meta:
-            model = Recipe
-            fields = ('author', 'tags')
-
         if self.request.user.is_anonymous:
             return Recipe.objects.none()
 

@@ -1,13 +1,7 @@
 from django.contrib import admin
 
-from .models import (
-    Favorite,
-    Ingredient,
-    Recipe,
-    RecipeIngredients,
-    ShoppingCart,
-    Tag,
-)
+from .models import (Favorite, Ingredient, Recipe, RecipeIngredients,
+                     ShoppingCart, Tag)
 
 
 @admin.register(Ingredient)
@@ -33,7 +27,7 @@ class RecipeAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         """
         Используем select_related для заджойнивания авторов
-        и зафетчивания ингредиентов и тегов
+        и зафетчивания ингредиентов и тегов.
         """
         queryset = super().get_queryset(
             request

@@ -1,20 +1,17 @@
+from api.config.config import COOKING_TIME, ONE_OR_MORE_INGREDIENTS
+from api.utils.serializers_utils import (is_recipe_favorited,
+                                         is_recipe_in_shopping_cart,
+                                         validate_tags,
+                                         validate_unique_ingredients)
+from baseapp.models import Ingredient, Recipe, RecipeIngredients, Tag
+from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
+from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
-from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
-from django.shortcuts import get_object_or_404
-
-from api.config.config import COOKING_TIME, ONE_OR_MORE_INGREDIENTS
-from api.utils.serializers_utils import (
-    is_recipe_favorited,
-    is_recipe_in_shopping_cart,
-    validate_tags,
-    validate_unique_ingredients,
-)
-from baseapp.models import Ingredient, Recipe, RecipeIngredients, Tag
-
+ERR_MSG = 'Не удается войти в систему с предоставленными учетными данными.'
 
 User = get_user_model()
 
@@ -93,10 +90,6 @@ class SubscriptionSerializer(UserSerializer):
             'id'
         )
 
-    def get_recipes_count(self, obj: User) -> int:
-        """Получает количество рецептов определенного пользователя."""
-        return obj.recipes_count
-
 
 class TagSerializer(ModelSerializer):
     """Сериализатор для модели Tag."""
@@ -115,17 +108,17 @@ class IngredientSerializer(ModelSerializer):
 
 
 class RecipeIngredientsSerializer(serializers.ModelSerializer):
-    """Сериализатор для модели RecipeIngredients"""
-
-    class Meta:
-        model = RecipeIngredients
-        fields = ('id', 'name', 'measurement_unit', 'amount')
+    """Сериализатор для модели RecipeIngredients."""
 
     id = serializers.IntegerField(source='ingredient_id')
     name = serializers.SerializerMethodField(method_name='get_name')
     measurement_unit = serializers.SerializerMethodField(
         method_name='get_measurement_unit'
     )
+
+    class Meta:
+        model = RecipeIngredients
+        fields = ('id', 'name', 'measurement_unit', 'amount')
 
     def get_name(self, obj) -> str:
         """Получает название ингредиента."""
