@@ -1,22 +1,3 @@
-from api.config.config import (ALREADY_IN_FAVORITES,
-                               PROHIBITION_OF_SELF_SIGNING,
-                               SUCCESSFUL_UNSUBSCRIPTION)
-from api.filter import RecipeFilter
-from api.mixins import (MultiSerializerViewSetMixin, TagAndIngridientMixin,
-                        ViewMixin)
-from api.pagination import CustomPagination
-from api.permissions import IsAuthorOrAdminOrReadOnly
-from api.serializers import (IngredientSerializer, MiniRecipeSerializer,
-                             RecipeCreateUpdateSerializer, RecipeSerializer,
-                             SubscriptionSerializer, TagSerializer,
-                             UserSerializer)
-from api.utils.utils import (get_author, perform_favorite_or_cart_action,
-                             perform_subscribe_action)
-from baseapp.models import Favorite, Ingredient, Recipe, RecipeIngredients, Tag
-from django.contrib.auth import get_user_model
-from django.db.models import Count, Prefetch, Sum
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework import status
@@ -24,7 +5,42 @@ from rest_framework.decorators import action
 from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+
+from django.contrib.auth import get_user_model
+from django.db.models import Count, Prefetch, Sum
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+
+from api.config.config import (
+    ALREADY_IN_FAVORITES,
+    PROHIBITION_OF_SELF_SIGNING,
+    SUCCESSFUL_UNSUBSCRIPTION,
+)
+from api.filter import RecipeFilter
+from api.mixins import (
+    MultiSerializerViewSetMixin,
+    TagAndIngridientMixin,
+    ViewMixin,
+)
+from api.pagination import CustomPagination
+from api.permissions import IsAuthorOrAdminOrReadOnly
+from api.serializers import (
+    IngredientSerializer,
+    MiniRecipeSerializer,
+    RecipeCreateUpdateSerializer,
+    RecipeSerializer,
+    SubscriptionSerializer,
+    TagSerializer,
+    UserSerializer,
+)
+from api.utils.utils import (
+    get_author,
+    perform_favorite_or_cart_action,
+    perform_subscribe_action,
+)
+from baseapp.models import Favorite, Ingredient, Recipe, RecipeIngredients, Tag
 from users.models import Subscription
+
 
 User = get_user_model()
 

@@ -1,15 +1,20 @@
-from api.config.config import COOKING_TIME, ONE_OR_MORE_INGREDIENTS
-from api.utils.serializers_utils import (is_recipe_favorited,
-                                         is_recipe_in_shopping_cart,
-                                         validate_tags,
-                                         validate_unique_ingredients)
-from baseapp.models import Ingredient, Recipe, RecipeIngredients, Tag
-from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
-from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
+
+from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
+from django.shortcuts import get_object_or_404
+
+from api.config.config import COOKING_TIME, ONE_OR_MORE_INGREDIENTS
+from api.utils.serializers_utils import (
+    is_recipe_favorited,
+    is_recipe_in_shopping_cart,
+    validate_tags,
+    validate_unique_ingredients,
+)
+from baseapp.models import Ingredient, Recipe, RecipeIngredients, Tag
+
 
 User = get_user_model()
 
