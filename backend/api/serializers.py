@@ -11,8 +11,6 @@ from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
-ERR_MSG = 'Не удается войти в систему с предоставленными учетными данными.'
-
 User = get_user_model()
 
 
@@ -252,7 +250,6 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
         Returns:
             Recipe: Созданный рецепт.
         """
-
         author = self.context.get('request').user
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
@@ -283,7 +280,6 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
         Returns:
             Recipe: Обновленный рецепт.
         """
-
         tags = validated_data.pop('tags', None)
         if tags is not None:
             instance.tags.set(tags)
@@ -314,7 +310,6 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
         Returns:
             dict: Представление рецепта.
         """
-
         serializer = RecipeSerializer(
             instance,
             context={'request': self.context.get('request')}

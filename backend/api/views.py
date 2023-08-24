@@ -1,5 +1,4 @@
 from api.config.config import (ALREADY_IN_FAVORITES,
-                               ALREADY_ON_THE_SHOPPING_LIST,
                                PROHIBITION_OF_SELF_SIGNING,
                                SUCCESSFUL_UNSUBSCRIPTION)
 from api.filter import RecipeFilter
@@ -13,8 +12,7 @@ from api.serializers import (IngredientSerializer, MiniRecipeSerializer,
                              UserSerializer)
 from api.utils.utils import (get_author, perform_favorite_or_cart_action,
                              perform_subscribe_action)
-from baseapp.models import (Favorite, Ingredient, Recipe, RecipeIngredients,
-                            ShoppingCart, Tag)
+from baseapp.models import Favorite, Ingredient, Recipe, RecipeIngredients, Tag
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Prefetch, Sum
 from django.http import HttpResponse
@@ -41,7 +39,7 @@ class UserViewSet(DjoserUserViewSet, ViewMixin):
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        # Аннотация для подсчета количества рецептов
+        """Аннотация для подсчета количества рецептов."""
         queryset = super().get_queryset()
         queryset = queryset.annotate(recipes_count=Count('recipes'))
         return queryset

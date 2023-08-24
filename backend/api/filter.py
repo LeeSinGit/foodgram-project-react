@@ -1,9 +1,11 @@
 from distutils.util import strtobool
 from typing import Any
 
-from baseapp.models import Favorite, Recipe, ShoppingCart, Tag
-from django.db import models
 from django_filters import rest_framework as filters
+
+from django.db import models
+
+from baseapp.models import Favorite, Recipe, ShoppingCart, Tag
 
 
 class RecipeFilter(filters.FilterSet):
