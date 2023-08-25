@@ -11,20 +11,6 @@ class CustomUserAdmin(admin.ModelAdmin):
     search_fields = ('email', 'username', 'first_name', 'last_name')
     list_filter = ('date_joined', 'email', 'first_name')
 
-    def get_queryset(self, request):
-        '''
-        Используем select_related для заджойнивания групп
-        и зафетчивания разрешений.
-        '''
-        queryset = super().get_queryset(
-            request
-        ).select_related(
-            'groups'
-        ).prefetch_related(
-            'user_permissions'
-        )
-        return queryset
-
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):

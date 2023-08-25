@@ -52,8 +52,6 @@ class CustomUserManager(BaseUserManager):
             self,
             email,
             username,
-            first_name,
-            last_name,
             password=None,
             **extra_fields
     ):
@@ -63,8 +61,6 @@ class CustomUserManager(BaseUserManager):
         Args:
             email (str): Электронная почта пользователя.
             username (str): Ник пользователя.
-            first_name (str): Имя пользователя.
-            last_name (str): Фамилия пользователя.
             password (str, optional): Пароль пользователя. Defaults to None.
             **extra_fields: Дополнительные поля пользователя.
 
@@ -82,8 +78,8 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(
             email,
             username,
-            first_name,
-            last_name,
-            password,
+            first_name='',
+            last_name='',
+            password=password,
             **extra_fields
         )
