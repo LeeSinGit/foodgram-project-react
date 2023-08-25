@@ -31,24 +31,18 @@ class RecipeFilter(filters.FilterSet):
         field_name='author',
         lookup_expr='exact'
     )
+
     tags = filters.ModelMultipleChoiceFilter(
         field_name='tags__slug',
         to_field_name='slug',
         queryset=Tag.objects.all()
     )
 
+    class Meta:
+        model = Recipe
+        fields = ('author', 'tags')
+
     def is_favorited_method(self, queryset: Any, name: str, value: str) -> Any:
-        """
-        Фильтр по избранности рецепта.
-
-        Args:
-            queryset (QuerySet): Исходный набор данных.
-            name (str): Имя поля фильтра.
-            value (str): Значение фильтра.
-
-        Returns:
-            QuerySet: Отфильтрованный набор данных.
-        """
         if self.request.user.is_anonymous:
             return Recipe.objects.none()
 
@@ -61,10 +55,10 @@ class RecipeFilter(filters.FilterSet):
         return queryset.filter(id__in=recipe_ids)
 
     def is_in_shopping_cart_method(
-            self,
-            queryset: Any,
-            name: str,
-            value: str
+        self,
+        queryset: Any,
+        name: str,
+        value: str
     ) -> Any:
         """
         Фильтр по наличию в списке покупок.

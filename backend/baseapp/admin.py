@@ -31,10 +31,12 @@ class RecipeAdmin(admin.ModelAdmin):
     readonly_fields = ('favorited_count',)
 
     def get_queryset(self, request):
-        '''
+        """
         Используем select_related для заджойнивания авторов
         и зафетчивания ингредиентов и тегов
         '''
+        и зафетчивания ингредиентов и тегов.
+        """
         queryset = super().get_queryset(
             request
         ).select_related(
