@@ -16,7 +16,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG_VALUE', 'False') == 'True'
 
 ip_addresses_str = os.getenv('IP_ADDRESSES')
-IP_ADDRESSES = ip_addresses_str.split(',') if ip_addresses_str is not None else []
+ALLOWED_HOSTS = ip_addresses_str.split(',') if ip_addresses_str is not None else []
 
 
 INSTALLED_APPS = [
