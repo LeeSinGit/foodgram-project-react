@@ -77,10 +77,6 @@ class RecipeFilter(filters.FilterSet):
         Returns:
             QuerySet: Отфильтрованный набор данных.
         """
-        class Meta:
-            model = Recipe
-            fields = ('author', 'tags')
-
         if self.request.user.is_anonymous:
             return Recipe.objects.none()
 
@@ -91,3 +87,7 @@ class RecipeFilter(filters.FilterSet):
             return queryset.exclude(id__in=recipe_ids)
 
         return queryset.filter(id__in=recipe_ids)
+
+    class Meta:
+        model = Recipe
+        fields = ('author', 'tags')

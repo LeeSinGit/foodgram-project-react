@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Prefetch, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 
@@ -108,10 +108,11 @@ class UserViewSet(DjoserUserViewSet, ViewMixin):
                 {'detail': SUCCESSFUL_UNSUBSCRIPTION},
                 status=status.HTTP_204_NO_CONTENT
             )
-        return Response(
-            {'error': f'{self.link_model.__name__} не существует'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        else:
+            return Response(
+                {'error': f'{self.link_model.__name__} не существует'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
     @action(
         methods=['get'],
@@ -214,7 +215,11 @@ class RecipeViewSet(MultiSerializerViewSetMixin, ModelViewSet):
     )
     def download_shopping_cart(self, request):
         """Скачать список покупок."""
-        buy_list_text = self.get_shopping_list_text()
+        shopping_cart = ShoppingCart.objects.filter(user=self.request.user)
+        recipes = [item.recipe.id for item in shopping_cart]
+
+        # Отформатированный список ингредиентов и их количество
+        buy_list_text = self.get_shopping_list_text(recipes)
 
         response = HttpResponse(buy_list_text, content_type='text/plain')
         response['Content-Disposition'] = (
@@ -222,32 +227,24 @@ class RecipeViewSet(MultiSerializerViewSetMixin, ModelViewSet):
         )
         return response
 
-    def get_shopping_list_text(self):
-        """
-        Создает текстовый список покупок на
-        основе рецептов из списка покупок пользователя.
-        """
-        shopping_cart_recipes = Recipe.objects.filter(
-            in_shopping_list__user=self.request.user
-        ).prefetch_related(
-            Prefetch(
-                'recipeingredients_set',
-                queryset=RecipeIngredients.objects.select_related(
-                    'ingredient'
-                ),
-            )
-        ).distinct()
+    def get_shopping_list_text(self, recipes):
+        """Создает текстовый список покупок на основе рецептов."""
+        ingredients_aggregated = (
+            RecipeIngredients.objects.filter(recipe__in=recipes)
+            .values('ingredient')
+            .annotate(amount=Sum('amount'))
+        )
 
         buy_list_text = 'Список покупок:\n\n'
-
-        for recipe in shopping_cart_recipes:
-            recipe_ingredients = recipe.recipeingredients_set.all()
-            for ingredient in recipe_ingredients:
-                ingredient_name = ingredient.ingredient.name
-                measurement_unit = ingredient.ingredient.measurement_unit
-                total_amount = ingredient.amount
+        for item in ingredients_aggregated:
+            try:
+                ingredient = Ingredient.objects.get(pk=item['ingredient'])
+                amount = item['amount']
                 buy_list_text += (
-                    f'{ingredient_name}, {total_amount} {measurement_unit}\n'
+                    f'{ingredient.name}, {amount} '
+                    f'{ingredient.measurement_unit}\n'
                 )
+            except Ingredient.DoesNotExist:
+                pass
 
         return buy_list_text

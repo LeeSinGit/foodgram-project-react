@@ -59,6 +59,10 @@ class UserSerializer(ModelSerializer):
 
         return obj.subscribers.filter(user=user).exists()
 
+    def get_recipes_count(self, obj: User) -> int:
+        """Получает количество рецептов определенного пользователя."""
+        return obj.recipes_count
+
     def to_representation(self, instance: User) -> dict:
         """
         Преобразует модель пользователя в представление.
@@ -72,6 +76,25 @@ class UserSerializer(ModelSerializer):
         representation['recipes'] = recipes.data
 
         return representation
+
+    def create(self, validated_data: dict) -> User:
+        """
+        Создать пользователя.
+
+        Args:
+            validated_data (dict): Проверенные данные.
+
+        Returns:
+            User: Созданный пользователь.
+        """
+        user = User.objects.create_user(
+            email=validated_data['email'],
+            username=validated_data['username'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name'],
+            password=validated_data['password']
+        )
+        return user
 
 
 class SubscriptionSerializer(UserSerializer):
@@ -117,10 +140,6 @@ class IngredientSerializer(ModelSerializer):
 class RecipeIngredientsSerializer(serializers.ModelSerializer):
     """Сериализатор для модели RecipeIngredients"""
 
-    class Meta:
-        model = RecipeIngredients
-        fields = ('id', 'name', 'measurement_unit', 'amount')
-
     id = serializers.IntegerField(source='ingredient_id')
     name = serializers.SerializerMethodField(method_name='get_name')
     measurement_unit = serializers.SerializerMethodField(
@@ -135,16 +154,16 @@ class RecipeIngredientsSerializer(serializers.ModelSerializer):
         """Получает единицу измерения ингредиента."""
         return obj.ingredient.measurement_unit
 
+    class Meta:
+        model = RecipeIngredients
+        fields = ('id', 'name', 'measurement_unit', 'amount')
+
 
 class CreateUpdateRecipeIngredientsSerializer(serializers.ModelSerializer):
     """
     Сериализатор для модели Ingredient,
     позволяющий создавать, обновлять ингридиенты.
     """
-
-    class Meta:
-        model = Ingredient
-        fields = ('id', 'amount')
 
     id = serializers.IntegerField()
     amount = serializers.IntegerField(
@@ -156,24 +175,13 @@ class CreateUpdateRecipeIngredientsSerializer(serializers.ModelSerializer):
         )
     )
 
+    class Meta:
+        model = Ingredient
+        fields = ('id', 'amount')
+
 
 class RecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Recipe."""
-
-    class Meta:
-        model = Recipe
-        fields = (
-            'id',
-            'name',
-            'author',
-            'image',
-            'text',
-            'ingredients',
-            'tags',
-            'cooking_time',
-            'is_favorited',
-            'is_in_shopping_cart',
-        )
 
     author = UserSerializer(read_only=True)
     tags = TagSerializer(many=True)
@@ -203,27 +211,16 @@ class RecipeSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         return is_recipe_in_shopping_cart(user, obj)
 
+    class Meta:
+        model = Recipe
+        exclude = ('pub_date',)
+
 
 class RecipeCreateUpdateSerializer(ModelSerializer):
     """
     Сериализатор для модели Recipe,
     позволяющий создавать, обновлять рецепты.
     """
-
-    class Meta:
-        model = Recipe
-        fields = (
-            'id',
-            'name',
-            'author',
-            'image',
-            'text',
-            'ingredients',
-            'tags',
-            'cooking_time',
-            'is_favorited',
-            'is_in_shopping_cart',
-        )
 
     author = UserSerializer(read_only=True)
     tags = serializers.PrimaryKeyRelatedField(
@@ -328,3 +325,7 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
         )
 
         return serializer.data
+
+    class Meta:
+        model = Recipe
+        exclude = ('pub_date',)

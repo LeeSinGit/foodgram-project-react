@@ -4,7 +4,7 @@ services:
 
   db:
     image: postgres:15.1-alpine
-    container_name: foodgram-db
+    container_name: foodgram-db2
     networks:
       - foodgram-network
     restart: always
@@ -16,8 +16,8 @@ services:
       - ../.env
 
   backend:
-    container_name: backend
-    image: leesindoc/foodgram_backend
+    container_name: backend2
+    build: ../backend
     networks:
       - foodgram-network
     restart: always
@@ -29,18 +29,18 @@ services:
       - ../.env
 
   frontend:
-    container_name: frontend
+    container_name: frontend2
     networks:
       - foodgram-network
-    image: leesindoc/foodgram_frontend
+    build: ../frontend
     volumes:
       - ../frontend/:/app/result_build/
 
   nginx:
-    container_name: nginx
+    container_name: nginx2
     networks:
       - foodgram-network
-    image: leesindoc/foodgram_nginx
+    image: nginx:1.19.3
     restart: always
     ports:
       - "80:80"
