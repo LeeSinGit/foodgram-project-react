@@ -93,9 +93,9 @@ class ShoppingCartAdmin(admin.ModelAdmin):
 
 @admin.register(RecipeIngredients)
 class RecipeIngredientsAdmin(admin.ModelAdmin):
-    list_display = ('id', 'recipe', 'ingredient', 'amount')
-    list_filter = ('id', 'recipe', 'ingredient', 'amount')
-    search_fields = ('id', 'amount',)
+    list_display = ('id', 'recipe', 'ingredient')
+    list_filter = ('id', 'recipe', 'ingredient')
+    search_fields = ('id',)
 
     def get_queryset(self, request):
         """
