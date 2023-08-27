@@ -95,16 +95,16 @@ class ShoppingCartAdmin(admin.ModelAdmin):
 class RecipeIngredientsAdmin(admin.ModelAdmin):
     list_display = ('id', 'recipe', 'ingredient')
     list_filter = ('id', 'recipe', 'ingredient')
-    search_fields = ('id',)
+    search_fields = ('id')
 
-    def get_queryset(self, request):
-        """
-        Используем select_related для заджойнивания рецептов и ингредиентов.
-        """
-        queryset = super().get_queryset(
-            request
-        ).select_related(
-            'recipe',
-            'ingredient'
-        )
-        return queryset
+    # def get_queryset(self, request):
+    #     """
+    #     Используем select_related для заджойнивания рецептов и ингредиентов.
+    #     """
+    #     queryset = super().get_queryset(
+    #         request
+    #     ).select_related(
+    #         'recipe',
+    #         'ingredient'
+    #     )
+    #     return queryset
