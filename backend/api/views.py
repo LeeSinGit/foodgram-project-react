@@ -13,6 +13,7 @@ from django.shortcuts import get_object_or_404
 
 from api.config.config import (
     ALREADY_IN_FAVORITES,
+    ALREADY_ON_THE_SHOPPING_LIST,
     PROHIBITION_OF_SELF_SIGNING,
     SUCCESSFUL_UNSUBSCRIPTION,
 )
@@ -38,7 +39,14 @@ from api.utils.utils import (
     perform_favorite_or_cart_action,
     perform_subscribe_action,
 )
-from baseapp.models import Favorite, Ingredient, Recipe, RecipeIngredients, Tag
+from baseapp.models import (
+    Favorite,
+    Ingredient,
+    Recipe,
+    RecipeIngredients,
+    ShoppingCart,
+    Tag,
+)
 from users.models import Subscription
 
 
@@ -177,6 +185,21 @@ class RecipeViewSet(MultiSerializerViewSetMixin, ModelViewSet):
             user,
             recipe,
             Favorite,
+            MiniRecipeSerializer,
+            error_message,
+            request,
+        )
+
+    @action(detail=True, methods=('post', 'delete'))
+    def shopping_cart(self, request, pk=None):
+        """Добавить или удалить рецепт из списка покупок."""
+        user = self.request.user
+        recipe = get_object_or_404(Recipe, pk=pk)
+        error_message = ALREADY_ON_THE_SHOPPING_LIST
+        return perform_favorite_or_cart_action(
+            user,
+            recipe,
+            ShoppingCart,
             MiniRecipeSerializer,
             error_message,
             request,
