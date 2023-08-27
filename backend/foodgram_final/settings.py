@@ -74,6 +74,7 @@ DATABASES = {
         'USER': os.getenv('POSTGRES_USER', default='postgres'),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='postgres'),
         'HOST': os.getenv('DB_HOST', default='db'),
+        # 'HOST': 'localhost',
         'PORT': os.getenv('DB_PORT', default=5432),
     }
 }
@@ -139,3 +140,22 @@ DJOSER = {
 
 PAGE_SIZE = 6
 MAX_PAGE_SIZE = 20
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "django.db.backends": {
+            "level": "DEBUG",
+            "handlers": [
+                "console",
+            ],
+        },
+    },
+}

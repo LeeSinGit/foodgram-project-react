@@ -93,10 +93,6 @@ class SubscriptionSerializer(UserSerializer):
             'id'
         )
 
-    def get_recipes_count(self, obj: User) -> int:
-        """Получает количество рецептов определенного пользователя."""
-        return obj.recipes_count
-
 
 class TagSerializer(ModelSerializer):
     """Сериализатор для модели Tag."""
@@ -115,17 +111,17 @@ class IngredientSerializer(ModelSerializer):
 
 
 class RecipeIngredientsSerializer(serializers.ModelSerializer):
-    """Сериализатор для модели RecipeIngredients"""
-
-    class Meta:
-        model = RecipeIngredients
-        fields = ('id', 'name', 'measurement_unit', 'amount')
+    """Сериализатор для модели RecipeIngredients."""
 
     id = serializers.IntegerField(source='ingredient_id')
     name = serializers.SerializerMethodField(method_name='get_name')
     measurement_unit = serializers.SerializerMethodField(
         method_name='get_measurement_unit'
     )
+
+    class Meta:
+        model = RecipeIngredients
+        fields = ('id', 'name', 'measurement_unit', 'amount')
 
     def get_name(self, obj) -> str:
         """Получает название ингредиента."""
@@ -259,7 +255,6 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
         Returns:
             Recipe: Созданный рецепт.
         """
-
         author = self.context.get('request').user
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
@@ -290,7 +285,6 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
         Returns:
             Recipe: Обновленный рецепт.
         """
-
         tags = validated_data.pop('tags', None)
         if tags is not None:
             instance.tags.set(tags)
@@ -321,7 +315,6 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
         Returns:
             dict: Представление рецепта.
         """
-
         serializer = RecipeSerializer(
             instance,
             context={'request': self.context.get('request')}

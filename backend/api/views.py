@@ -7,13 +7,12 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Prefetch, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 
 from api.config.config import (
     ALREADY_IN_FAVORITES,
-    ALREADY_ON_THE_SHOPPING_LIST,
     PROHIBITION_OF_SELF_SIGNING,
     SUCCESSFUL_UNSUBSCRIPTION,
 )
@@ -39,14 +38,7 @@ from api.utils.utils import (
     perform_favorite_or_cart_action,
     perform_subscribe_action,
 )
-from baseapp.models import (
-    Favorite,
-    Ingredient,
-    Recipe,
-    RecipeIngredients,
-    ShoppingCart,
-    Tag,
-)
+from baseapp.models import Favorite, Ingredient, Recipe, RecipeIngredients, Tag
 from users.models import Subscription
 
 
@@ -63,7 +55,7 @@ class UserViewSet(DjoserUserViewSet, ViewMixin):
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        # Аннотация для подсчета количества рецептов
+        """Аннотация для подсчета количества рецептов."""
         queryset = super().get_queryset()
         queryset = queryset.annotate(recipes_count=Count('recipes'))
         return queryset
@@ -75,7 +67,6 @@ class UserViewSet(DjoserUserViewSet, ViewMixin):
     )
     def subscribe(self, request, id=None):
         """Подписаться на пользователя."""
-
         context = self.get_serializer_context()
 
         author = get_author(id)
@@ -95,7 +86,6 @@ class UserViewSet(DjoserUserViewSet, ViewMixin):
     @subscribe.mapping.delete
     def delete_subscribe(self, request, id=None):
         """Отписаться от пользователя."""
-
         context = self.get_serializer_context()
         author = get_author(id)
 
@@ -120,7 +110,6 @@ class UserViewSet(DjoserUserViewSet, ViewMixin):
     )
     def subscriptions(self, request):
         """Получить список подписок пользователя."""
-
         page = self.paginate_queryset(
             User.objects.filter(subscribers__user=self.request.user)
         )
@@ -192,62 +181,35 @@ class RecipeViewSet(MultiSerializerViewSetMixin, ModelViewSet):
             request,
         )
 
-    @action(detail=True, methods=('post', 'delete'))
-    def shopping_cart(self, request, pk=None):
-        """Добавить или удалить рецепт из списка покупок."""
-        user = self.request.user
-        recipe = get_object_or_404(Recipe, pk=pk)
-        error_message = ALREADY_ON_THE_SHOPPING_LIST
-        return perform_favorite_or_cart_action(
-            user,
-            recipe,
-            ShoppingCart,
-            MiniRecipeSerializer,
-            error_message,
-            request,
-        )
-
     @action(
         detail=False,
         methods=('get',),
-        permission_classes=(IsAuthenticated,),
+        permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request):
-        """Скачать список покупок."""
-        buy_list_text = self.get_shopping_list_text()
-
+        buy_list_text = self.get_shopping_list_text(request.user)
         response = HttpResponse(buy_list_text, content_type='text/plain')
         response['Content-Disposition'] = (
             'attachment; filename=shopping-list.txt'
         )
         return response
 
-    def get_shopping_list_text(self):
-        """
-        Создает текстовый список покупок на
-        основе рецептов из списка покупок пользователя.
-        """
-        shopping_cart_recipes = Recipe.objects.filter(
-            in_shopping_list__user=self.request.user
-        ).prefetch_related(
-            Prefetch(
-                'recipeingredients_set',
-                queryset=RecipeIngredients.objects.select_related(
-                    'ingredient'
-                ),
-            )
-        ).distinct()
+    def get_shopping_list_text(self, user):
+        ingredients = RecipeIngredients.objects.filter(
+            recipe__in_shopping_list__user=user
+        ).values(
+            'ingredient__name', 'ingredient__measurement_unit'
+        ).annotate(
+            amount=Sum('amount')
+        )
 
         buy_list_text = 'Список покупок:\n\n'
 
-        for recipe in shopping_cart_recipes:
-            recipe_ingredients = recipe.recipeingredients_set.all()
-            for ingredient in recipe_ingredients:
-                ingredient_name = ingredient.ingredient.name
-                measurement_unit = ingredient.ingredient.measurement_unit
-                total_amount = ingredient.amount
-                buy_list_text += (
-                    f'{ingredient_name}, {total_amount} {measurement_unit}\n'
-                )
+        for ingredient in ingredients:
+            ingredient_name = ingredient['ingredient__name']
+            measurement_unit = ingredient['ingredient__measurement_unit']
+            total_amount = ingredient['amount']
+            buy_list_text += (f'{ingredient_name}, {total_amount}'
+                              f'{measurement_unit}\n')
 
         return buy_list_text
