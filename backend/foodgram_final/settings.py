@@ -1,11 +1,18 @@
 import os
 from pathlib import Path
 
+from decouple import Csv, config
 from dotenv import load_dotenv
 
 
 load_dotenv()
 
+
+CSRF_TRUSTED_ORIGINS = config(
+    "CSRF_TRUSTED_ORIGINS",
+    default="http://localhost, http://127.0.0.1",
+    cast=Csv(),
+)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -67,7 +74,9 @@ WSGI_APPLICATION = 'foodgram_final.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': os.getenv('DB_ENGINE', default='django.db.backends.postgresql'),
+        'ENGINE': os.getenv(
+            'DB_ENGINE', default='django.db.backends.postgresql'
+        ),
         'NAME': os.getenv('DB_NAME', default='postgres'),
         'USER': os.getenv('POSTGRES_USER', default='postgres'),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='postgres'),
@@ -141,18 +150,18 @@ MAX_PAGE_SIZE = 20
 
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
         },
     },
-    'loggers': {
-        'django.db.backends': {
-            'level': 'DEBUG',
-            'handlers': [
-                'console',
+    "loggers": {
+        "django.db.backends": {
+            "level": "DEBUG",
+            "handlers": [
+                "console",
             ],
         },
     },

@@ -1,13 +1,6 @@
 from django.contrib import admin
 
-from .models import (
-    Favorite,
-    Ingredient,
-    Recipe,
-    RecipeIngredients,
-    ShoppingCart,
-    Tag,
-)
+from .models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 
 
 @admin.register(Ingredient)
@@ -33,7 +26,7 @@ class RecipeAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         """
         Используем select_related для заджойнивания авторов
-        и зафетчивания ингредиентов и тегов.
+        и зафетчивания ингредиентов и тегов
         """
         queryset = super().get_queryset(
             request
@@ -58,15 +51,14 @@ class FavoriteAdmin(admin.ModelAdmin):
     search_fields = ('id', 'name',)
 
     def get_queryset(self, request):
-        '''
+        """
         Используем select_related для заджойнивания пользователей
         и зафетчивания связанных рецептов.
-        '''
+        """
         queryset = super().get_queryset(
             request
         ).select_related(
-            'user'
-        ).prefetch_related(
+            'user',
             'recipe'
         )
         return queryset
@@ -79,37 +71,14 @@ class ShoppingCartAdmin(admin.ModelAdmin):
     search_fields = ('id', 'name',)
 
     def get_queryset(self, request):
-        '''
+        """
         Используем select_related для заджойнивания пользователей
         и зафетчивания рецептов, находящихся в корзине.
-        '''
+        """
         queryset = super().get_queryset(
             request
         ).select_related(
-            'user'
-        ).prefetch_related(
+            'user',
             'recipe'
-        )
-        return queryset
-
-
-@admin.register(RecipeIngredients)
-class RecipeIngredientsAdmin(admin.ModelAdmin):
-    list_display = ('id', 'recipe', 'ingredient', 'amount')
-    list_filter = ('id', 'recipe', 'ingredient', 'amount')
-    search_fields = ('id', 'amount',)
-
-    def get_queryset(self, request):
-        '''
-        Используем select_related для заджойнивания рецептов
-        и зафетчивания ингредиентов и их количества.
-        '''
-        queryset = super().get_queryset(
-            request
-        ).select_related(
-            'recipe'
-        ).prefetch_related(
-            'ingredient',
-            'amount'
         )
         return queryset
