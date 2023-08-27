@@ -16,6 +16,16 @@ cd foodgram-project-react/infra/
 ```
 docker-compose up --build
 ```
+#### Данные админки | URL.
+
+ip: 158.160.27.151 (не указывал в настройках nginx и .env, выдаёт ошибку)
+
+URL: https://foodgram-final.hopto.org/
+
+Userame: Admin;
+Email: admin2019@yandex.ru;
+Password: admin.
+
 
 #### Импорт из CSV в базу данных был выполнен с помощью:
 ```
@@ -52,5 +62,31 @@ pip install -r requirements.txt
 python manage.py migrate
 ```
 ****
+#### Примеры запросов.
+
+Получить токен регистрации.
+
+```
+http://foodgram-final.hopto.org/api/auth/token/login/
+```
+
+Пример 'body -> json' (в проекте такого пользователя нет).
+```
+{
+  "password": "OEFEFJjdhwedheh2443",
+  "email": "vpupkin665@yandex.ru"
+}
+```
+
+Получить теги.
+```
+http://foodgram-final.hopto.org/api/tags/
+```
+
+Получить ингредиенты.
+```
+http://localhost/api/ingredients/
+```
+
 ### *Над проектом работал Лисин Семён :heart:*
 ### *Код написан на языке Python :v:*
