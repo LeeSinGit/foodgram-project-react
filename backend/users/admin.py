@@ -26,8 +26,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
         queryset = super().get_queryset(
             request
         ).select_related(
-            'author'
-        ).prefetch_related(
+            'author',
             'user'
         )
         return queryset

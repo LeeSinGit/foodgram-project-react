@@ -138,10 +138,6 @@ class CreateUpdateRecipeIngredientsSerializer(serializers.ModelSerializer):
     позволяющий создавать, обновлять ингридиенты.
     """
 
-    class Meta:
-        model = Ingredient
-        fields = ('id', 'amount')
-
     id = serializers.IntegerField()
     amount = serializers.IntegerField(
         validators=(
@@ -152,9 +148,25 @@ class CreateUpdateRecipeIngredientsSerializer(serializers.ModelSerializer):
         )
     )
 
+    class Meta:
+        model = Ingredient
+        fields = ('id', 'amount')
+
 
 class RecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Recipe."""
+
+    author = UserSerializer(read_only=True)
+    tags = TagSerializer(many=True)
+    ingredients = serializers.SerializerMethodField(
+        method_name='get_ingredients'
+    )
+    is_favorited = serializers.SerializerMethodField(
+        method_name='get_is_favorited'
+    )
+    is_in_shopping_cart = serializers.SerializerMethodField(
+        method_name='get_is_in_shopping_cart'
+    )
 
     class Meta:
         model = Recipe
@@ -170,18 +182,6 @@ class RecipeSerializer(serializers.ModelSerializer):
             'is_favorited',
             'is_in_shopping_cart',
         )
-
-    author = UserSerializer(read_only=True)
-    tags = TagSerializer(many=True)
-    ingredients = serializers.SerializerMethodField(
-        method_name='get_ingredients'
-    )
-    is_favorited = serializers.SerializerMethodField(
-        method_name='get_is_favorited'
-    )
-    is_in_shopping_cart = serializers.SerializerMethodField(
-        method_name='get_is_in_shopping_cart'
-    )
 
     def get_ingredients(self, obj) -> list:
         """Получает список ингредиентов для рецепта."""
@@ -206,21 +206,6 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
     позволяющий создавать, обновлять рецепты.
     """
 
-    class Meta:
-        model = Recipe
-        fields = (
-            'id',
-            'name',
-            'author',
-            'image',
-            'text',
-            'ingredients',
-            'tags',
-            'cooking_time',
-            'is_favorited',
-            'is_in_shopping_cart',
-        )
-
     author = UserSerializer(read_only=True)
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
@@ -236,6 +221,21 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
             ),
         )
     )
+
+    class Meta:
+        model = Recipe
+        fields = (
+            'id',
+            'name',
+            'author',
+            'image',
+            'text',
+            'ingredients',
+            'tags',
+            'cooking_time',
+            'is_favorited',
+            'is_in_shopping_cart',
+        )
 
     def validate_tags(self, value) -> list:
         """Проверяет, что список тегов не пуст."""
