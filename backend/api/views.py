@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Prefetch, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 
@@ -106,11 +106,10 @@ class UserViewSet(DjoserUserViewSet, ViewMixin):
                 {'detail': SUCCESSFUL_UNSUBSCRIPTION},
                 status=status.HTTP_204_NO_CONTENT
             )
-        else:
-            return Response(
-                {'error': f'{self.link_model.__name__} не существует'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        return Response(
+            {'error': f'{self.link_model.__name__} не существует'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     @action(
         methods=['get'],
@@ -211,41 +210,29 @@ class RecipeViewSet(MultiSerializerViewSetMixin, ModelViewSet):
         permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request):
-        """Скачать список покупок."""
-        buy_list_text = self.get_shopping_list_text()
-
+        buy_list_text = self.get_shopping_list_text(request.user)
         response = HttpResponse(buy_list_text, content_type='text/plain')
         response['Content-Disposition'] = (
             'attachment; filename=shopping-list.txt'
         )
         return response
 
-    def get_shopping_list_text(self):
-        """
-        Создает текстовый список покупок на
-        основе рецептов из списка покупок пользователя.
-        """
-        shopping_cart_recipes = Recipe.objects.filter(
-            in_shopping_list__user=self.request.user
-        ).prefetch_related(
-            Prefetch(
-                'recipeingredients_set',
-                queryset=RecipeIngredients.objects.select_related(
-                    'ingredient'
-                ),
-            )
-        ).distinct()
+    def get_shopping_list_text(self, user):
+        ingredients = RecipeIngredients.objects.filter(
+            recipe__in_shopping_list__user=user
+        ).values(
+            'ingredient__name', 'ingredient__measurement_unit'
+        ).annotate(
+            amount=Sum('amount')
+        )
 
         buy_list_text = 'Список покупок:\n\n'
 
-        for recipe in shopping_cart_recipes:
-            recipe_ingredients = recipe.recipeingredients_set.all()
-            for ingredient in recipe_ingredients:
-                ingredient_name = ingredient.ingredient.name
-                measurement_unit = ingredient.ingredient.measurement_unit
-                total_amount = ingredient.amount
-                buy_list_text += (
-                    f'{ingredient_name}, {total_amount} {measurement_unit}\n'
-                )
+        for ingredient in ingredients:
+            ingredient_name = ingredient['ingredient__name']
+            measurement_unit = ingredient['ingredient__measurement_unit']
+            total_amount = ingredient['amount']
+            buy_list_text += (f'{ingredient_name}, {total_amount}'
+                              f'{measurement_unit}\n')
 
         return buy_list_text

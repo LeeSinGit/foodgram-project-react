@@ -33,8 +33,6 @@ class RecipeAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         """
         Используем select_related для заджойнивания авторов
-        и зафетчивания ингредиентов и тегов
-        '''
         и зафетчивания ингредиентов и тегов.
         """
         queryset = super().get_queryset(
@@ -60,15 +58,14 @@ class FavoriteAdmin(admin.ModelAdmin):
     search_fields = ('id', 'name',)
 
     def get_queryset(self, request):
-        '''
+        """
         Используем select_related для заджойнивания пользователей
         и зафетчивания связанных рецептов.
-        '''
+        """
         queryset = super().get_queryset(
             request
         ).select_related(
-            'user'
-        ).prefetch_related(
+            'user',
             'recipe'
         )
         return queryset
@@ -81,15 +78,14 @@ class ShoppingCartAdmin(admin.ModelAdmin):
     search_fields = ('id', 'name',)
 
     def get_queryset(self, request):
-        '''
-        Используем select_related для заджойнивания пользователей
-        и зафетчивания рецептов, находящихся в корзине.
-        '''
+        """
+        Используем select_related для заджойнивания пользователей и рецептов
+        в корзине.
+        """
         queryset = super().get_queryset(
             request
         ).select_related(
-            'user'
-        ).prefetch_related(
+            'user',
             'recipe'
         )
         return queryset
@@ -102,16 +98,13 @@ class RecipeIngredientsAdmin(admin.ModelAdmin):
     search_fields = ('id', 'amount',)
 
     def get_queryset(self, request):
-        '''
-        Используем select_related для заджойнивания рецептов
-        и зафетчивания ингредиентов и их количества.
-        '''
+        """
+        Используем select_related для заджойнивания рецептов и ингредиентов.
+        """
         queryset = super().get_queryset(
             request
         ).select_related(
-            'recipe'
-        ).prefetch_related(
-            'ingredient',
-            'amount'
+            'recipe',
+            'ingredient'
         )
         return queryset
