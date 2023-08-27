@@ -95,21 +95,4 @@ class ShoppingCartAdmin(admin.ModelAdmin):
 
 @admin.register(RecipeIngredients)
 class RecipeIngredientsAdmin(admin.ModelAdmin):
-    list_display = ('id', 'recipe', 'ingredient', 'amount')
-    list_filter = ('id', 'recipe', 'ingredient', 'amount')
-    search_fields = ('id', 'amount',)
-
-    def get_queryset(self, request):
-        '''
-        Используем select_related для заджойнивания рецептов
-        и зафетчивания ингредиентов и их количества.
-        '''
-        queryset = super().get_queryset(
-            request
-        ).select_related(
-            'recipe'
-        ).prefetch_related(
-            'ingredient',
-            'amount'
-        )
-        return queryset
+    list_display = ('id', 'recipe', 'ingredient')
