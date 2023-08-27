@@ -91,8 +91,3 @@ class ShoppingCartAdmin(admin.ModelAdmin):
             'recipe'
         )
         return queryset
-
-
-@admin.register(RecipeIngredients)
-class RecipeIngredientsAdmin(admin.ModelAdmin):
-    list_display = ('id', 'recipe', 'ingredient')
