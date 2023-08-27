@@ -28,9 +28,15 @@ Password: admin.
 
 
 #### Импорт из CSV в базу данных был выполнен с помощью:
+Копирование с пк на сервер.
+```
+scp -i C:/Dev/vm_access/yc-semenlisin2019 C:/Dev/foodgram-project-react-master/data/* yc-user@158.160.27.151:/home/yc-user/foodgram/data/
+```
+Копирование с сервера в докер контейнер с БД.
 ```
 docker cp data/ingredients.csv foodgram-db:/ingredients.csv
 ```
+Копирование данных из файла основной директории контейнера в БД.
 ```
 COPY baseapp_ingredient (name, measurement_unit) FROM '/ingredients.csv' DELIMITER ',' CSV HEADER;
 ```
