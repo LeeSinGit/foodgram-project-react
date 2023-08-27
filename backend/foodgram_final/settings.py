@@ -1,11 +1,18 @@
 import os
 from pathlib import Path
 
+from decouple import Csv, config
 from dotenv import load_dotenv
 
 
 load_dotenv()
 
+
+CSRF_TRUSTED_ORIGINS = config(
+    "CSRF_TRUSTED_ORIGINS",
+    default="http://localhost, http://127.0.0.1",
+    cast=Csv(),
+)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
