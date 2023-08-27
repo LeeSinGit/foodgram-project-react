@@ -60,6 +60,17 @@ class RecipeFilter(filters.FilterSet):
         name: str,
         value: str
     ) -> Any:
+        """
+        Фильтр по наличию в списке покупок.
+
+        Args:
+            queryset (QuerySet): Исходный набор данных.
+            name (str): Имя поля фильтра.
+            value (str): Значение фильтра.
+
+        Returns:
+            QuerySet: Отфильтрованный набор данных.
+        """
         if self.request.user.is_anonymous:
             return Recipe.objects.none()
 
@@ -70,3 +81,7 @@ class RecipeFilter(filters.FilterSet):
             return queryset.exclude(id__in=recipe_ids)
 
         return queryset.filter(id__in=recipe_ids)
+
+    class Meta:
+        model = Recipe
+        fields = ('author', 'tags')

@@ -60,6 +60,7 @@ class MultiSerializerViewSetMixin:
     serializer from `serializer_classes`.
     """
 
+    # serializer_classes: Optional[dict[str, Type[Serializer]]] = None
     serializer_classes: str
 
     def get_serializer_class(self):
