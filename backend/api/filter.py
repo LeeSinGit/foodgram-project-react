@@ -38,10 +38,6 @@ class RecipeFilter(filters.FilterSet):
         queryset=Tag.objects.all()
     )
 
-    class Meta:
-        model = Recipe
-        fields = ('author', 'tags')
-
     def is_favorited_method(self, queryset: Any, name: str, value: str) -> Any:
         if self.request.user.is_anonymous:
             return Recipe.objects.none()
