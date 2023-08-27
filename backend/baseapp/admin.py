@@ -58,14 +58,15 @@ class FavoriteAdmin(admin.ModelAdmin):
     search_fields = ('id', 'name',)
 
     def get_queryset(self, request):
-        """
+        '''
         Используем select_related для заджойнивания пользователей
         и зафетчивания связанных рецептов.
-        """
+        '''
         queryset = super().get_queryset(
             request
         ).select_related(
-            'user',
+            'user'
+        ).prefetch_related(
             'recipe'
         )
         return queryset
@@ -78,14 +79,15 @@ class ShoppingCartAdmin(admin.ModelAdmin):
     search_fields = ('id', 'name',)
 
     def get_queryset(self, request):
-        """
-        Используем select_related для заджойнивания пользователей и рецептов
-        в корзине.
-        """
+        '''
+        Используем select_related для заджойнивания пользователей
+        и зафетчивания рецептов, находящихся в корзине.
+        '''
         queryset = super().get_queryset(
             request
         ).select_related(
-            'user',
+            'user'
+        ).prefetch_related(
             'recipe'
         )
         return queryset
@@ -98,13 +100,16 @@ class RecipeIngredientsAdmin(admin.ModelAdmin):
     search_fields = ('id', 'amount',)
 
     def get_queryset(self, request):
-        """
-        Используем select_related для заджойнивания рецептов и ингредиентов.
-        """
+        '''
+        Используем select_related для заджойнивания рецептов
+        и зафетчивания ингредиентов и их количества.
+        '''
         queryset = super().get_queryset(
             request
         ).select_related(
-            'recipe',
-            'ingredient'
+            'recipe'
+        ).prefetch_related(
+            'ingredient',
+            'amount'
         )
         return queryset
