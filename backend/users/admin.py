@@ -9,14 +9,12 @@ class CustomUserAdmin(admin.ModelAdmin):
         'id', 'username', 'email', 'first_name', 'last_name', 'date_joined',
     )
     search_fields = ('email', 'username', 'first_name', 'last_name')
-    list_filter = ('date_joined', 'email', 'first_name')
 
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ('id', 'author', 'user', 'date_added')
-    search_fields = ('id', 'author', 'user', 'date_added')
-    list_filter = ('id', 'author', 'user')
+    search_fields = ('author', 'user', 'date_added')
 
     def get_queryset(self, request):
         """

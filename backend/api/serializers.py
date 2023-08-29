@@ -93,6 +93,14 @@ class SubscriptionSerializer(UserSerializer):
             'id'
         )
 
+    def get_recipes(self, obj):
+        limit = self.context['request'].query_params.get('recipes_limit')
+        recipes = (
+            obj.recipes.all()[:int(limit)]
+            if limit is not None else obj.recipes.all()
+        )
+        return MiniRecipeSerializer(recipes, many=True).data
+
 
 class TagSerializer(ModelSerializer):
     """Сериализатор для модели Tag."""

@@ -1,84 +1,64 @@
 from django.contrib import admin
+from django.db.models import Count
 
-from .models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from .models import (
+    Favorite,
+    Ingredient,
+    Recipe,
+    RecipeIngredients,
+    ShoppingCart,
+    Tag,
+)
 
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'measurement_unit', )
-    list_filter = ('name', )
-    search_fields = ('id', 'name', )
+    list_display = ('name', 'measurement_unit')
 
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'color', 'slug', )
-    search_fields = ('id', 'name', 'slug', )
+    list_display = ('name', 'color', 'slug')
+    search_fields = ('name', 'slug')
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'author')
-    list_filter = ('author', 'name', 'tags')
-    search_fields = ('name', 'author__username')
-    readonly_fields = ('favorited_count',)
-
     def get_queryset(self, request):
-        """
-        Используем select_related для заджойнивания авторов
-        и зафетчивания ингредиентов и тегов
-        """
         queryset = super().get_queryset(
             request
         ).select_related(
             'author'
         ).prefetch_related(
-            'ingredients',
-            'tags'
+            'ingredients', 'tags'
         )
-        return queryset
+        return queryset.annotate(
+            favorited_count=Count('in_favorite')
+        )
+
+    list_display = ('name', 'author', 'favorited_count')
+    list_filter = ('author', 'tags')
+    search_fields = ('name', 'author__username')
+    readonly_fields = ('favorited_count',)
 
     def favorited_count(self, obj):
-        return obj.is_favorited.count()
+        return obj.favorited_count
 
-    favorited_count.short_description = 'Favorites Count'
+    favorited_count.short_description = 'Количество в избранном'
 
 
 @admin.register(Favorite)
 class FavoriteAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'recipe',)
-    list_filter = ('id', 'user', 'recipe')
-    search_fields = ('id', 'name',)
-
-    def get_queryset(self, request):
-        """
-        Используем select_related для заджойнивания пользователей
-        и зафетчивания связанных рецептов.
-        """
-        queryset = super().get_queryset(
-            request
-        ).select_related(
-            'user',
-            'recipe'
-        )
-        return queryset
+    list_display = ('user', 'recipe')
+    list_filter = ('user', 'recipe')
 
 
 @admin.register(ShoppingCart)
 class ShoppingCartAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'recipe',)
-    list_filter = ('id', 'user', 'recipe',)
-    search_fields = ('id', 'name',)
+    list_display = ('user', 'recipe')
+    list_filter = ('user', 'recipe')
 
-    def get_queryset(self, request):
-        """
-        Используем select_related для заджойнивания пользователей
-        и зафетчивания рецептов, находящихся в корзине.
-        """
-        queryset = super().get_queryset(
-            request
-        ).select_related(
-            'user',
-            'recipe'
-        )
-        return queryset
+
+@admin.register(RecipeIngredients)
+class RecipeIngredientsAdmin(admin.ModelAdmin):
+    pass
