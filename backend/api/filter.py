@@ -1,11 +1,12 @@
 from distutils.util import strtobool
 from typing import Any
 
+from django_filters import CharFilter
 from django_filters import rest_framework as filters
 
 from django.db import models
 
-from baseapp.models import Favorite, Recipe, ShoppingCart, Tag
+from baseapp.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 
 
 class RecipeFilter(filters.FilterSet):
@@ -66,3 +67,11 @@ class RecipeFilter(filters.FilterSet):
             return queryset.exclude(id__in=recipe_ids)
 
         return queryset.filter(id__in=recipe_ids)
+
+
+class IngredientFilter(filters.FilterSet):
+    name = CharFilter(field_name='name', lookup_expr='icontains')
+
+    class Meta:
+        model = Ingredient
+        fields = ['name']

@@ -17,7 +17,7 @@ from api.config.config import (
     PROHIBITION_OF_SELF_SIGNING,
     SUCCESSFUL_UNSUBSCRIPTION,
 )
-from api.filter import RecipeFilter
+from api.filter import IngredientFilter, RecipeFilter
 from api.mixins import (
     MultiSerializerViewSetMixin,
     TagAndIngridientMixin,
@@ -141,6 +141,7 @@ class IngredientsViewSet(ModelViewSet, TagAndIngridientMixin):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     lookup_field = 'id'
+    filterset_class = IngredientFilter
 
 
 class RecipeViewSet(MultiSerializerViewSetMixin, ModelViewSet):

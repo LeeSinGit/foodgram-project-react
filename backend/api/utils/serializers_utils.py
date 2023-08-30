@@ -65,8 +65,10 @@ def validate_unique_ingredients(ingredients):
     Raises:
         serializers.ValidationError: Если есть дубликаты ингредиентов.
     """
-    ingredient_ids = [item['id'] for item in ingredients]
-    for ingredient in ingredient_ids:
-        if ingredient_ids.count(ingredient) > 1:
+    ingredient_ids = set()
+    for item in ingredients:
+        ingredient_id = item['id']
+        if ingredient_id in ingredient_ids:
             raise serializers.ValidationError(IDENTICAL_ONES_ARE_NOT_ALLOWED)
+        ingredient_ids.add(ingredient_id)
     return ingredients
