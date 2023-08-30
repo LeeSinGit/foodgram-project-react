@@ -282,36 +282,68 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
 
         return recipe
 
-    def update(self, instance, validated_data) -> Recipe:
+    def update(self, recipe, validated_data):
         """
         Обновляет рецепт.
 
         Args:
-            instance (Recipe): Существующий рецепт.
+            recipe (Recipe): Существующий рецепт.
             validated_data (dict): Проверенные данные.
 
         Returns:
             Recipe: Обновленный рецепт.
         """
-        tags = validated_data.pop('tags', None)
-        if tags is not None:
-            instance.tags.set(tags)
+        if 'ingredients' in validated_data:
+            ingredients = validated_data.pop('ingredients')
+            RecipeIngredients.objects.filter(recipe=recipe).delete()
+            self.add_recipe_ingredients(ingredients, recipe)
+        if 'tags' in validated_data:
+            tags_data = validated_data.pop('tags')
+            recipe.tags.set(tags_data)
+        return super().update(recipe, validated_data)
 
-        ingredients = validated_data.pop('ingredients', None)
-        if ingredients is not None:
-            instance.ingredients.clear()
+    def add_recipe_ingredients(self, ingredients, recipe):
+        """
+        Добавляет ингредиенты к рецепту.
 
-            for ingredient in ingredients:
-                amount = ingredient['amount']
-                ingredient = get_object_or_404(Ingredient, pk=ingredient['id'])
+        Args:
+            ingredients (list): Список ингредиентов.
+            recipe (Recipe): Рецепт.
+        """
+        for ingredient in ingredients:
+            ingredient_id = ingredient['id']
+            amount = ingredient['amount']
+            ingredient_instance = get_object_or_404(
+                Ingredient,
+                pk=ingredient_id
+            )
 
+            if RecipeIngredients.objects.filter(
+                    recipe=recipe,
+                    ingredient=ingredient_instance,
+            ).exists():
+                current_amount = RecipeIngredients.objects.get(
+                    recipe=recipe,
+                    ingredient=ingredient_instance
+                ).amount
+                new_amount = current_amount + amount
+                if new_amount > 0:
+                    RecipeIngredients.objects.update_or_create(
+                        recipe=recipe,
+                        ingredient=ingredient_instance,
+                        defaults={'amount': new_amount},
+                    )
+                else:
+                    RecipeIngredients.objects.filter(
+                        recipe=recipe,
+                        ingredient=ingredient_instance
+                    ).delete()
+            else:
                 RecipeIngredients.objects.update_or_create(
-                    recipe=instance,
-                    ingredient=ingredient,
-                    defaults={'amount': amount}
+                    recipe=recipe,
+                    ingredient=ingredient_instance,
+                    defaults={'amount': amount},
                 )
-
-        return super().update(instance, validated_data)
 
     def to_representation(self, instance) -> dict:
         """
