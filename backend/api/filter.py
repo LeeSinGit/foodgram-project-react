@@ -1,7 +1,6 @@
 from distutils.util import strtobool
 from typing import Any
 
-from django_filters import CharFilter
 from django_filters import rest_framework as filters
 
 from django.db import models
@@ -70,8 +69,8 @@ class RecipeFilter(filters.FilterSet):
 
 
 class IngredientFilter(filters.FilterSet):
-    name = CharFilter(field_name='name', lookup_expr='icontains')
+    name = filters.CharFilter(lookup_expr='istartswith')
 
     class Meta:
         model = Ingredient
-        fields = ['name']
+        fields = ('name',)

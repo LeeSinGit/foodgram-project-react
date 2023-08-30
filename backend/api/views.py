@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Prefetch, Sum
@@ -24,7 +24,7 @@ from api.mixins import (
     ViewMixin,
 )
 from api.pagination import CustomPagination
-from api.permissions import IsAuthorOrAdminOrReadOnly
+from api.permissions import IsAdminOrReadOnly, IsAuthorOrAdminOrReadOnly
 from api.serializers import (
     IngredientSerializer,
     MiniRecipeSerializer,
@@ -135,12 +135,13 @@ class TagViewSet(ModelViewSet, TagAndIngridientMixin):
     lookup_field = 'id'
 
 
-class IngredientsViewSet(ModelViewSet, TagAndIngridientMixin):
+class IngredientsViewSet(ReadOnlyModelViewSet):
     """Представление для операций с ингредиентами."""
 
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    lookup_field = 'id'
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (DjangoFilterBackend,)
     filterset_class = IngredientFilter
 
 
