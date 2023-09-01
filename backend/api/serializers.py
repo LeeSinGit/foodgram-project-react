@@ -219,6 +219,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         return serializer.data
 
     def get_is_favorited(self, obj):
+        """Проверяет, добавлен ли рецепт в избранное пользователем."""
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             user = request.user
@@ -226,6 +227,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         return False
 
     def get_is_in_shopping_cart(self, obj):
+        """Проверяет, добавлен ли рецепт в список покупок пользователя."""
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             current_user = request.user
