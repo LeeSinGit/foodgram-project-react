@@ -14,6 +14,7 @@ from api.utils.serializers_utils import (
     validate_unique_ingredients,
 )
 from baseapp.models import Ingredient, Recipe, RecipeIngredients, Tag
+from users.models import Subscription
 
 
 User = get_user_model()
@@ -50,14 +51,29 @@ class UserSerializer(ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
         read_only_fields = ('is_subscribed', 'recipes')
 
-    def get_is_subscribed(self, obj: User) -> bool:
-        """Проверяет, подписан ли пользователь."""
-        user = self.context.get('request').user
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        current_user = request.user if request else None
 
-        if user.is_anonymous:
-            return False
+        if current_user and current_user.is_authenticated:
+            return Subscription.objects.filter(
+                user=current_user.id,
+                author=obj.id
+            ).exists()
 
-        return obj.subscribers.filter(user=user).exists()
+        return False
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        current_user = request.user if request else None
+
+        if current_user and current_user.is_authenticated:
+            return Subscription.objects.filter(
+                user=current_user.id,
+                author=obj.id
+            ).exists()
+
+        return False
 
     def to_representation(self, instance: User) -> dict:
         """
@@ -94,12 +110,17 @@ class SubscriptionSerializer(UserSerializer):
         )
 
     def get_recipes(self, obj):
-        limit = self.context['request'].query_params.get('recipes_limit')
-        recipes = (
-            obj.recipes.all()[:int(limit)]
-            if limit is not None else obj.recipes.all()
+        request = self.context.get('request')
+        limit = request.query_params.get('recipes_limit')
+        recipes = obj.recipes.all()
+        if limit:
+            recipes = recipes[:int(limit)]
+        serializer = RecipeSerializer(
+            recipes,
+            many=True,
+            read_only=True
         )
-        return MiniRecipeSerializer(recipes, many=True).data
+        return serializer.data
 
 
 class TagSerializer(ModelSerializer):
@@ -197,15 +218,19 @@ class RecipeSerializer(serializers.ModelSerializer):
         serializer = RecipeIngredientsSerializer(ingredients, many=True)
         return serializer.data
 
-    def get_is_favorited(self, obj) -> bool:
-        """Проверяет, добавлен ли рецепт в избранное пользователем."""
-        user = self.context['request'].user
-        return is_recipe_favorited(user, obj)
+    def get_is_favorited(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            user = request.user
+            return is_recipe_favorited(user, obj)
+        return False
 
-    def get_is_in_shopping_cart(self, obj) -> bool:
-        """Проверяет, добавлен ли рецепт в список покупок пользователя."""
-        user = self.context['request'].user
-        return is_recipe_in_shopping_cart(user, obj)
+    def get_is_in_shopping_cart(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            current_user = request.user
+            return is_recipe_in_shopping_cart(current_user, obj)
+        return False
 
 
 class RecipeCreateUpdateSerializer(ModelSerializer):

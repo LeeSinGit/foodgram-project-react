@@ -119,7 +119,7 @@ class UserViewSet(DjoserUserViewSet, ViewMixin):
     def subscriptions(self, request):
         """Получить список подписок пользователя."""
         page = self.paginate_queryset(
-            User.objects.filter(subscribers__user=self.request.user)
+            User.objects.filter(subscribers__user=request.user)
         )
         serializer = SubscriptionSerializer(
             page, many=True, context={'request': request}
