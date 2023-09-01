@@ -63,18 +63,6 @@ class UserSerializer(ModelSerializer):
 
         return False
 
-    def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        current_user = request.user if request else None
-
-        if current_user and current_user.is_authenticated:
-            return Subscription.objects.filter(
-                user=current_user.id,
-                author=obj.id
-            ).exists()
-
-        return False
-
     def to_representation(self, instance: User) -> dict:
         """
         Преобразует модель пользователя в представление.
